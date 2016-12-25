@@ -114,12 +114,14 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "new_leader_election":
             if self._context.heartbeat_send_job is not None:
                 self._context.heartbeat_send_job.cancel()
+            self._context.cancel()
             self._state = self.State.START
             self._context = self.StartContext()
             asyncio.ensure_future(self.start(), loop=self._loop)
         elif message["type"] == "you_are_rejected":
             if self._context.heartbeat_send_job is not None:
                 self._context.heartbeat_send_job.cancel()
+            self._context.cancel()
             self._state = self.State.START
             self._context = self.StartContext()
             asyncio.ensure_future(self.start(), loop=self._loop)
@@ -152,6 +154,7 @@ class DHT(network.Network, timer.Timer):
         self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
         if self._context.heartbeat_send_job is not None:
             self._context.heartbeat_send_job.cancel()
+        self._context.cancel()
         self._state = self.State.START
         self._context = self.StartContext()
         asyncio.ensure_future(self.start(), loop=self._loop)

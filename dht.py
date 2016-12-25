@@ -66,6 +66,7 @@ class DHT(network.Network, timer.Timer):
 
                     self.master_peer_list_updated()
         elif message["type"] == "heartbeat_ping":
+            logging.info("PINGPING")
             message = {
                 "type": "heartbeat_pong",
                 "uuid": self.uuid,
@@ -73,6 +74,7 @@ class DHT(network.Network, timer.Timer):
             }
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
+            logging.info("PONGPONG")
             if self._state == self.State.MASTER:
                 client_uuid = message["uuid"]
                 if client_uuid in self._context.heartbeat_timer:
@@ -253,9 +255,13 @@ class DHT(network.Network, timer.Timer):
                     logging.info("I am the leader of {peers} peers".format(peers=len(sorted_list)))
                 else:
                     #I am the slave
-                    #self._context = self.SlaveContext()
-                    #self._state = self.State.SLAVE
-                    pass
+                    self._context = self.SlaveContext()
+                    self._state = self.State.SLAVE
+                    #self._context.master_addr = max_addr
+                    #self._context.master_uuid = max_val
+                    self._context.master_timestamp = -1
+                    #asyncio.ensure_future(self.slave(), loop=self._loop)
+                    logging.info("I am the slave of MASTER {master_addr}.".format(master_addr=max_addr))
 
             if self._state == self.State.MASTER:
                 self.update_peer_list()

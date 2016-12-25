@@ -147,6 +147,7 @@ class DHT(network.Network, timer.Timer):
     async def slave_heartbeat_timeout(self):
         message = {
             "type": "new_leader_election",
+            "uuid": self.uuid,
         }
         self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
         if self._context.heartbeat_send_job is not None:
@@ -159,6 +160,7 @@ class DHT(network.Network, timer.Timer):
         client = None
         message = {
             "type": "you_are_rejected",
+            "uuid": self.uuid,
         }
         for (uuid, addr) in self._context.peer_list:
             if uuid == client_uuid:

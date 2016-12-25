@@ -66,7 +66,6 @@ class DHT(network.Network, timer.Timer):
 
                     self.master_peer_list_updated()
         elif message["type"] == "heartbeat_ping":
-            logging.info("PINGPING")
             message = {
                 "type": "heartbeat_pong",
                 "uuid": self.uuid,
@@ -74,7 +73,6 @@ class DHT(network.Network, timer.Timer):
             }
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
-            logging.info("PONGPONG")
             if self._state == self.State.MASTER:
                 client_uuid = message["uuid"]
                 if client_uuid in self._context.heartbeat_timer:
@@ -100,11 +98,15 @@ class DHT(network.Network, timer.Timer):
                 asyncio.ensure_future(self.slave(), loop=self._loop)
                 pass
         elif message["type"] == "peer_list":
+            logging.info("peer_list1")
             if self._state == self.State.SLAVE:
+                logging.info("peer_list2")
                 if self._context.master_timestamp == message["timestamp"]:
+                    logging.info("peer_list3")
                     self._context.peer_index[message["peer_index"]] = (message["peer_uuid"], message["peer_addr"])
 
                     if (len(self._context.peer_index) + 1) == self._context.peer_count:
+                        logging.info("peer_list4")
                         self._context.peer_list = []
                         for i in range(1, self._context.peer_count):
                             self._context.peer_list.append(self._context.peer_index[i])

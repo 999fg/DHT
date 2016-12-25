@@ -101,7 +101,7 @@ class DHT(network.Network, timer.Timer):
             logging.info("peer_list1")
             if self._state == self.State.SLAVE:
                 logging.info("peer_list2")
-                if self._context.master_timestamp == message["timestamp"]:
+                if self._context.master_uuid == message["uuid"]:
                     logging.info("peer_list3")
                     self._context.peer_index[message["peer_index"]] = (message["peer_uuid"], message["peer_addr"])
 
@@ -111,6 +111,18 @@ class DHT(network.Network, timer.Timer):
                         for i in range(1, self._context.peer_count):
                             self._context.peer_list.append(self._context.peer_index[i])
                         self.slave_peer_list_updated()
+        elif message["type"] == "new_leader_election":
+            if self._context.heartbeat_send_job is not None:
+                self._context.heartbeat_send_job.cancel()
+            self._state = self.State.START
+            self._context = self.StartContext()
+            asyncio.ensure_future(self.start(), loop=self._loop)
+        elif message["type"] == "you_are_rejected":
+            if self._context.heartbeat_send_job is not None:
+                self._context.heartbeat_send_job.cancel()
+            self._state = self.State.START
+            self._context = self.StartContext()
+            asyncio.ensure_future(self.start(), loop=self._loop)
         elif message["type"] == "search":
             logging.info("Client request: search")
             pass
@@ -133,6 +145,10 @@ class DHT(network.Network, timer.Timer):
             logging.info("Peer list updated: PEER[{peer}]".format(peer=str((uuid,addr))))
 
     async def slave_heartbeat_timeout(self):
+        message = {
+            "type": "new_leader_election",
+        }
+        self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
         if self._context.heartbeat_send_job is not None:
             self._context.heartbeat_send_job.cancel()
         self._state = self.State.START
@@ -141,9 +157,13 @@ class DHT(network.Network, timer.Timer):
 
     async def master_heartbeat_timeout(self, client_uuid):
         client = None
+        message = {
+            "type": "you_are_rejected",
+        }
         for (uuid, addr) in self._context.peer_list:
             if uuid == client_uuid:
                 client = (uuid, addr)
+                self.send_message(message, addr)
         self._context.peer_list.remove(client)
         self.update_peer_list()
         self.master_peer_list_updated()
@@ -257,10 +277,11 @@ class DHT(network.Network, timer.Timer):
                     logging.info("I am the leader of {peers} peers".format(peers=len(sorted_list)))
                 else:
                     #I am the slave
+                    self._context.cancel()
                     self._context = self.SlaveContext()
                     self._state = self.State.SLAVE
-                    #self._context.master_addr = max_addr
-                    #self._context.master_uuid = max_val
+                    self._context.master_addr = max_addr
+                    self._context.master_uuid = max_val
                     self._context.master_timestamp = -1
                     #asyncio.ensure_future(self.slave(), loop=self._loop)
                     logging.info("I am the slave of MASTER {master_addr}.".format(master_addr=max_addr))

@@ -9,7 +9,7 @@ import time
 
 
 _SHORT = datetime.timedelta(seconds=1)
-_LONG = datetime.timedelta(seconds=5)
+_LONG = datetime.timedelta(seconds=20)
 _MARGIN = 2
 _REPEAT = _MARGIN * (_LONG / _SHORT)
 

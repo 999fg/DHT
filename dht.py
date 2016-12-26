@@ -240,6 +240,7 @@ class DHT(network.Network, timer.Timer):
                 "uuid": self.uuid,
                 "timestamp": time.time(),
             }
+            logging.info("slave_heartbeat")
             self.send_message(message, self._context.master_addr)
 
         self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _LONG / 2)

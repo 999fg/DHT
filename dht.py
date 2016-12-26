@@ -10,6 +10,7 @@ import time
 
 _SHORT = datetime.timedelta(seconds=4)
 _LONG = datetime.timedelta(seconds=8)
+_TIMER_LONG = datetime.timedelta(seconds=16)
 _MARGIN = 2
 _REPEAT = _MARGIN * (_LONG / _SHORT)
 
@@ -39,7 +40,7 @@ class DHT(network.Network, timer.Timer):
         index = 0
         for (uuid, addr) in self._context.peer_list:
             self._context.heartbeat_timer[uuid] = \
-                self.async_trigger(lambda: self.master_heartbeat_timeout(uuid), _LONG / 2)
+                self.async_trigger(lambda: self.master_heartbeat_timeout(uuid), _TIMER_LONG)
             index += 1
             message = {
                 "type": "peer_list",
@@ -82,12 +83,12 @@ class DHT(network.Network, timer.Timer):
                     prev = self._context.heartbeat_timer[client_uuid]
                     prev.cancel()
                     self._context.heartbeat_timer[client_uuid] = \
-                        self.async_trigger(lambda: self.master_heartbeat_timeout(client_uuid), _LONG * 2)
+                        self.async_trigger(lambda: self.master_heartbeat_timeout(client_uuid), _TIMER_LONG)
             elif self._state == self.State.SLAVE:
                 master_uuid = message["uuid"]
                 if self._context.master_uuid == master_uuid:
                     self._context.heartbeat_timer.cancel()
-                    self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _LONG * 2)
+                    self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _TIMER_LONG)
         elif message["type"] == "leader_is_here":
             logging.info("leader_is_here")
             if self._state == self.State.START or \
@@ -223,7 +224,7 @@ class DHT(network.Network, timer.Timer):
             logging.info("slave_heartbeat")
             self.send_message(message, self._context.master_addr)
 
-        self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _LONG / 2)
+        self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _TIMER_LONG)
         self._context.heartbeat_send_job = self.async_period(heartbeat_send, _SHORT)
         pass
 

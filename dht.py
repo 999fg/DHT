@@ -98,9 +98,9 @@ class DHT(network.Network, timer.Timer):
                 asyncio.ensure_future(self.slave(), loop=self._loop)
                 pass
         elif message["type"] == "peer_list":
-            logging.info("peer_list1")
+            logging.info("peer_list1 self._state = {state1} is it equals SLAVE? then peer_list2 should show up.".format(state1=self._state))
             if self._state == self.State.SLAVE:
-                logging.info("peer_list2")
+                logging.info("peer_list2 self._context.master_uuid = {context_uuid} message[uuid] = {uuid} are they the same? then peer_list3 should show up.".format(context_uuid=self._context.master_uuid, uuid=message["uuid"]))
                 if self._context.master_uuid == message["uuid"]:
                     logging.info("peer_list3")
                     self._context.peer_index[message["peer_index"]] = (message["peer_uuid"], message["peer_addr"])

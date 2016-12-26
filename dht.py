@@ -8,8 +8,8 @@ import datetime
 import time
 
 
-_SHORT = datetime.timedelta(seconds=1)
-_LONG = datetime.timedelta(seconds=5)
+_SHORT = datetime.timedelta(seconds=4)
+_LONG = datetime.timedelta(seconds=8)
 _MARGIN = 2
 _REPEAT = _MARGIN * (_LONG / _SHORT)
 

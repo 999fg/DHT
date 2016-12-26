@@ -229,6 +229,7 @@ class DHT(network.Network, timer.Timer):
                     "uuid": self.uuid,
                     "timestamp": time.time(),
                 }
+                logging.info("master_heartbeat")
                 self.send_message(message, addr)
         self._context.heartbeat_send_job = self.async_period(heartbeat_send, _SHORT)
         pass

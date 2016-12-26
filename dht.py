@@ -63,7 +63,6 @@ class DHT(network.Network, timer.Timer):
                     self._context.peer_list.append((message["uuid"], addr))
                     self._context.peer_list.sort(reverse=True)
                     self.update_peer_list()
-
                     self.master_peer_list_updated()
         elif message["type"] == "heartbeat_ping":
             message = {
@@ -86,6 +85,7 @@ class DHT(network.Network, timer.Timer):
                     self._context.heartbeat_timer.cancel()
                     self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _LONG/2)
         elif message["type"] == "leader_is_here":
+            logging.info("leader_is_here")
             if self._state == self.State.START or \
                     (self._state == self.State.SLAVE and self._context.master_timestamp < message["timestamp"]):
                 self._context.cancel()

@@ -67,6 +67,7 @@ class DHT(network.Network, timer.Timer):
                     self.update_peer_list()
                     self.master_peer_list_updated()
         elif message["type"] == "heartbeat_ping":
+            logging.info("!!!!!PING!!!!!")
             message = {
                 "type": "heartbeat_pong",
                 "uuid": self.uuid,
@@ -74,6 +75,7 @@ class DHT(network.Network, timer.Timer):
             }
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
+            logging.info("!!!!!PONG!!!!!")
             if self._state == self.State.MASTER:
                 client_uuid = message["uuid"]
                 if client_uuid in self._context.heartbeat_timer:

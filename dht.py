@@ -80,12 +80,12 @@ class DHT(network.Network, timer.Timer):
                     prev = self._context.heartbeat_timer[client_uuid]
                     prev.cancel()
                     self._context.heartbeat_timer[client_uuid] = \
-                        self.async_trigger(lambda: self.master_heartbeat_timeout(client_uuid), _LONG/2)
+                        self.async_trigger(lambda: self.master_heartbeat_timeout(client_uuid), _LONG)
             elif self._state == self.State.SLAVE:
                 master_uuid = message["uuid"]
                 if self._context.master_uuid == master_uuid:
                     self._context.heartbeat_timer.cancel()
-                    self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _LONG/2)
+                    self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _LONG)
         elif message["type"] == "leader_is_here":
             logging.info("leader_is_here")
             if self._state == self.State.START or \

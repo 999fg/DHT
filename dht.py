@@ -10,7 +10,7 @@ import time
 
 _SHORT = datetime.timedelta(seconds=4)
 _LONG = datetime.timedelta(seconds=8)
-_TIMER_LONG = datetime.timedelta(seconds=16)
+_TIMER_LONG = datetime.timedelta(seconds=20)
 _MARGIN = 2
 _REPEAT = _MARGIN * (_LONG / _SHORT)
 
@@ -116,6 +116,13 @@ class DHT(network.Network, timer.Timer):
                         for i in range(1, self._context.peer_count):
                             self._context.peer_list.append(self._context.peer_index[i])
                         self.slave_peer_list_updated()
+        elif message["type"] == "you_are_rejected":
+            if self._context.heartbeat_send_job is not None:
+                self._context.heartbeat_send_job.cancel()
+            self._context.cancel()
+            self._state = self.State.START
+            self._context = self.StartContext()
+            asyncio.ensure_future(self.start(), loop=self._loop)
         elif message["type"] == "search":
             logging.info("Client request: search")
             pass
@@ -148,9 +155,14 @@ class DHT(network.Network, timer.Timer):
 
     async def master_heartbeat_timeout(self, client_uuid):
         client = None
+        message = {
+            "type": "you_are_rejected",
+            "uuid": self.uuid,
+        }
         for (uuid, addr) in self._context.peer_list:
             if uuid == client_uuid:
                 client = (uuid, addr)
+                self.send_message(message, addr)
         self._context.peer_list.remove(client)
         self.update_peer_list()
         logging.info("master_timeout")

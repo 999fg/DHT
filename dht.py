@@ -171,6 +171,7 @@ class DHT(network.Network, timer.Timer):
                 self.send_message(message, addr)
         self._context.peer_list.remove(client)
         self.update_peer_list()
+        logging.info("master_timeout")
         self.master_peer_list_updated()
 
     class StartContext:
@@ -294,6 +295,7 @@ class DHT(network.Network, timer.Timer):
 
             if self._state == self.State.MASTER:
                 self.update_peer_list()
+                logging.info("master_elected")
                 self.master_peer_list_updated()
 
         self._context.hello_job = self.async_period(hello, _SHORT)

@@ -57,6 +57,7 @@ class DHT(network.Network, timer.Timer):
         logging.debug("Message received from {addr}, {message}".format(addr=addr, message=message))
 
         if message["type"] == "hello":
+            logging.info("hello message arrived")
             if self._state == self.State.START:
                 self._context.messages.append((message, addr))
             elif self._state == self.State.MASTER:

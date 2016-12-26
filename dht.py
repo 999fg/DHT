@@ -130,11 +130,11 @@ class DHT(network.Network, timer.Timer):
             self._state = self.State.START
             self._context = self.StartContext()
             asyncio.ensure_future(self.start(), loop=self._loop)
-        elif message["type"] == "search":
-            logging.info("Client request: search")
+        elif message["type"] == "get":
+            logging.info("Client request: get")
             pass
-        elif message["type"] == "insert":
-            logging.info("Client request: insert")
+        elif message["type"] == "put":
+            logging.info("Client request: put")
             pass
         elif message["type"] == "delete":
             logging.info("Client request: delete")

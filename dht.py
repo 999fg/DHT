@@ -113,20 +113,6 @@ class DHT(network.Network, timer.Timer):
                         for i in range(1, self._context.peer_count):
                             self._context.peer_list.append(self._context.peer_index[i])
                         self.slave_peer_list_updated()
-        elif message["type"] == "new_leader_election":
-            if self._context.heartbeat_send_job is not None:
-                self._context.heartbeat_send_job.cancel()
-            self._context.cancel()
-            self._state = self.State.START
-            self._context = self.StartContext()
-            asyncio.ensure_future(self.start(), loop=self._loop)
-        elif message["type"] == "you_are_rejected":
-            if self._context.heartbeat_send_job is not None:
-                self._context.heartbeat_send_job.cancel()
-            self._context.cancel()
-            self._state = self.State.START
-            self._context = self.StartContext()
-            asyncio.ensure_future(self.start(), loop=self._loop)
         elif message["type"] == "search":
             logging.info("Client request: search")
             pass
@@ -149,28 +135,19 @@ class DHT(network.Network, timer.Timer):
             logging.info("Peer list updated: PEER[{peer}]".format(peer=str((uuid,addr))))
 
     async def slave_heartbeat_timeout(self):
-        message = {
-            "type": "new_leader_election",
-            "uuid": self.uuid,
-        }
-        self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
         if self._context.heartbeat_send_job is not None:
             self._context.heartbeat_send_job.cancel()
         self._context.cancel()
         self._state = self.State.START
         self._context = self.StartContext()
+        logging.info("slave_timeout")
         asyncio.ensure_future(self.start(), loop=self._loop)
 
     async def master_heartbeat_timeout(self, client_uuid):
         client = None
-        message = {
-            "type": "you_are_rejected",
-            "uuid": self.uuid,
-        }
         for (uuid, addr) in self._context.peer_list:
             if uuid == client_uuid:
                 client = (uuid, addr)
-                self.send_message(message, addr)
         self._context.peer_list.remove(client)
         self.update_peer_list()
         logging.info("master_timeout")

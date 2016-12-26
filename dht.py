@@ -246,6 +246,7 @@ class DHT(network.Network, timer.Timer):
     async def start(self):
         self._context = self.StartContext()
         async def hello():
+            logging.info("hello job entered")
             message = {
                 "type": "hello",
                 "uuid": self.uuid,

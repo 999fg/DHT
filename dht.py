@@ -9,7 +9,7 @@ import time
 
 
 _SHORT = datetime.timedelta(seconds=1)
-_LONG = datetime.timedelta(seconds=20)
+_LONG = datetime.timedelta(seconds=5)
 _MARGIN = 2
 _REPEAT = _MARGIN * (_LONG / _SHORT)
 
@@ -33,6 +33,7 @@ class DHT(network.Network, timer.Timer):
             "timestamp": self._context.timestamp,
             "peer_count": len(self._context.peer_list) + 1
         }
+        logging.info("leader_is_here_sent")
         self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
 
         index = 0

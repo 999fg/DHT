@@ -130,7 +130,7 @@ class DHT(network.Network, timer.Timer):
                 self.send_message(message, self._context.master_addr)
                 asyncio.ensure_future(self.slave(), loop=self._loop)
                 pass
-        elif message["type"] == "data_counter":
+        elif message["type"] == "data_counter_and_keys":
             if self._state == self.State.MASTER:
                 self._context.data_counter_dict[message["uuid"]] = message["data_counter"]
                 self._context.node_key[message["uuid"]] = message["key_list"]

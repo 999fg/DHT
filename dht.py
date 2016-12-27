@@ -178,12 +178,13 @@ class DHT(network.Network, timer.Timer):
                         }
                         self.send_message(_message, message["cli_addr"])
                     else:
+                        addr = tmp
                         for (uuid, addr) in self._context.peer_list:
                             if min_uuid == uuid:
                                 _message = {
                                     "type": "put_final",
                                     "uuid": self.uuid,
-                                    "cli_addr": message["cli_addr"],
+                                    "cli_addr": tmp,
                                     "key": message["key"],
                                     "value": message["value"],
                                 }
@@ -210,12 +211,13 @@ class DHT(network.Network, timer.Timer):
                         }
                         self.send_message(_message, message["cli_addr"])
                     else:
+                        tmp = message["cli_addr"]
                         for (uuid, addr) in self._context.peer_list:
                             if min_uuid == uuid:
                                 _message = {
                                     "type": "put_final",
                                     "uuid": self.uuid,
-                                    "cli_addr": message["cli_addr"],
+                                    "cli_addr": tmp,
                                     "key": message["key"],
                                     "value": message["value"],
                                 }
@@ -224,11 +226,12 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "put_final":
             if self._state == self.State.SLAVE:
                 self._context.data[message["key"]] = message["value"]
+                tmp = message["cli_addr"]
                 _message = {
                     "type": "put_success",
                     "uuid": self.uuid,
                 }
-                self.send_message(_message, message["cli_addr"])
+                self.send_message(_message, tmp)
 
         elif message["type"] == "delete":
             logging.info("Client request: delete")

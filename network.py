@@ -71,5 +71,3 @@ class Network:
 
     def close(self):
         self._socket.close()
-
-

@@ -64,10 +64,9 @@ class CLI(network.Network):
             index = 0
             for uuid, keylist in stat.items():
                 logging.info("-----------------")
-                logging.info("<Node {index}>".format(index=index))
+                logging.info("<NODE {index}>".format(index=index))
                 logging.info("UUID: {uuid}".format(uuid=uuid))
                 logging.info("# of KEYs: {no}".format(no=len(keylist)))
-                logging.info("-----------------")
                 logging.info("# of REDUNDANCIES")
                 for key in keylist:
                     logging.info("KEY {key}: {red} times".format(key=key, red=redundancy[key]))

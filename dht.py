@@ -28,6 +28,7 @@ class DHT(network.Network, timer.Timer):
         self._context.heartbeat_timer.clear()
         self._context.timestamp = time.time()
         self._context.data_counter_dict.clear()
+        self._context.node_key.clear()
         message = {
             "type": "leader_is_here",
             "uuid": self.uuid,
@@ -35,6 +36,8 @@ class DHT(network.Network, timer.Timer):
             "peer_count": len(self._context.peer_list) + 1,
         }
         logging.info("leader_is_here_sent")
+        if not (self.uuid in self._context.node_key.keys()):
+            self._context.node_key[self.uuid] = self._context.key
         self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
 
         index = 0
@@ -75,6 +78,9 @@ class DHT(network.Network, timer.Timer):
                 "timestamp": time.time(),
             }
             logging.info("mydata:{data}".format(data=self._context.data))
+            logging.info("mykey:{key}".format(key=self._context.key))
+            if self._state == self.State.MASTER:
+                logging.info("mykeylist:{keylist}".format(keylist=self._context.node_key))
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
             logging.info("!!!!!PONG!!!!!")
@@ -94,9 +100,11 @@ class DHT(network.Network, timer.Timer):
             logging.info("leader_is_here")
             tmp = None
             tmp_data = None
+            tmp_keys = None
             if self._state == self.State.SLAVE:
                 tmp = self._context.data_counter
                 tmp_data = self._context.data
+                tmp_key = self._context.key
             if self._state == self.State.START or \
                     (self._state == self.State.SLAVE and self._context.master_timestamp < message["timestamp"]):
                 self._context.cancel()
@@ -110,10 +118,13 @@ class DHT(network.Network, timer.Timer):
                     self._context.data_counter = tmp
                 if tmp_data:
                     self._context.data = tmp_data
+                if tmp_keys:
+                    self._context.key = tmp_key
                 message = {
-                    "type": "data_counter",
+                    "type": "data_counter_and_keys",
                     "uuid": self.uuid,
                     "data_counter": self._context.data_counter,
+                    "key_list": self._context.key,
                 }
                 self.send_message(message, self._context.master_addr)
                 asyncio.ensure_future(self.slave(), loop=self._loop)
@@ -121,6 +132,7 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "data_counter":
             if self._state == self.State.MASTER:
                 self._context.data_counter_dict[message["uuid"]] = message["data_counter"]
+                self._context.node_key[message["uuid"]] = message["key_list"]
         elif message["type"] == "peer_list":
             logging.info("peer_list1 self._state = {state1} is it equals SLAVE? then peer_list2 should show up.".format(state1=self._state))
             if self._state == self.State.SLAVE:
@@ -172,13 +184,22 @@ class DHT(network.Network, timer.Timer):
                 else:
                     tmp = addr
                     for (uuid, addr) in self._context.peer_list:
-                        _message = {
-                            "type": "get_ask",
-                            "uuid": self.uuid,
-                            "cli_addr": tmp,
-                            "key": message["key"],
-                        }
-                        self.send_message(_message, addr)
+                        if message["key"] in self._context.node_key[uuid]:
+                            _message = {
+                                "type": "get_ask",
+                                "uuid": self.uuid,
+                                "cli_addr": tmp,
+                                "key": message["key"],
+                            }
+                            self.send_message(_message, addr)
+                            return
+                    _message = {
+                        "type": "get_success",
+                        "uuid": self.uuid,
+                        "key": message["key"],
+                        "value": None
+                    }
+                    self.send_message(_message, tmp)
         elif message["type"] == "get_relayed":
             if self._state == self.State.MASTER:
                 if message["key"] in self._context.data.keys():
@@ -191,13 +212,22 @@ class DHT(network.Network, timer.Timer):
                     self.send_message(_message, tuple(message["cli_addr"]))
                 else:
                     for (uuid, addr) in self._context.peer_list:
-                        _message = {
-                            "type": "get_ask",
-                            "uuid": self.uuid,
-                            "cli_addr": message["cli_addr"],
-                            "key": message["key"],
-                        }
-                        self.send_message(_message, addr)
+                        if message["key"] in self._context.node_key[uuid]:
+                            _message = {
+                                "type": "get_ask",
+                                "uuid": self.uuid,
+                                "cli_addr": message["cli_addr"],
+                                "key": message["key"],
+                            }
+                            self.send_message(_message, addr)
+                            return
+                    _message = {
+                        "type": "get_success",
+                        "uuid": self.uuid,
+                        "key": message["key"],
+                        "value": None
+                    }
+                    self.send_message(_message, message["cli_addr"])
         elif message["type"] == "get_ask":
             if self._state == self.State.SLAVE:
                 if message["key"] in self._context.data.keys():
@@ -225,13 +255,10 @@ class DHT(network.Network, timer.Timer):
                 sorted_counter = [(k, self._context.data_counter_dict[k]) for k in sorted(self._context.data_counter_dict, key=self._context.data_counter_dict.get, reverse=False)]
                 if len(sorted_counter) < 3:
                     self._context.data[message["key"]] = message["value"]
+                    self._context.node_key[self.uuid].append(message["key"])
+                    self._context.key.append(message["key"])
                     self._context.data_counter_dict[self.uuid] += 1
                     self._context.data_counter += 1
-                    _message = {
-                        "type": "put_success",
-                        "uuid": self.uuid,
-                    }
-                    #self.send_message(_message, addr)
                     tmp = addr
                     for (uuid, addr) in self._context.peer_list:
                         _message = {
@@ -242,18 +269,14 @@ class DHT(network.Network, timer.Timer):
                             "value": message["value"],
                         }
                         self.send_message(_message, addr)
-                        self._context.data_counter_dict[uuid] += 1
                 else:
                     for (uuid, counter) in sorted_counter[:3]:
                         if uuid == self.uuid:
                             self._context.data[message["key"]] = message["value"]
+                            self._context.node_key[self.uuid].append(message["key"])
+                            self._context.key.append(message["key"])
                             self._context.data_counter_dict[self.uuid] += 1
                             self._context.data_counter += 1
-                            _message = {
-                                "type": "put_success",
-                                "uuid": self.uuid,
-                            }
-                            #self.send_message(_message, addr)
                         else:
                             tmp = addr
                             for (t_uuid, addr) in self._context.peer_list:
@@ -266,7 +289,6 @@ class DHT(network.Network, timer.Timer):
                                         "value": message["value"],
                                     }
                                     self.send_message(_message, addr)
-                                    self._context.data_counter_dict[t_uuid] += 1
         elif message["type"] == "put_relayed":
             logging.info("put_relayed")
             if self._state == self.State.MASTER:
@@ -275,13 +297,10 @@ class DHT(network.Network, timer.Timer):
                 sorted_counter = [(k, self._context.data_counter_dict[k]) for k in sorted(self._context.data_counter_dict, key=self._context.data_counter_dict.get, reverse=False)]
                 if len(sorted_counter) < 3:
                     self._context.data[message["key"]] = message["value"]
+                    self._context.node_key[self.uuid].append(message["key"])
+                    self._context.key.append(message["key"])
                     self._context.data_counter_dict[self.uuid] += 1
                     self._context.data_counter += 1
-                    _message = {
-                        "type": "put_success",
-                        "uuid": self.uuid,
-                    }
-                    #self.send_message(_message, tuple(message["cli_addr"]))
                     tmp = message["cli_addr"]
                     for (uuid, addr) in self._context.peer_list:
                         _message = {
@@ -292,18 +311,14 @@ class DHT(network.Network, timer.Timer):
                             "value": message["value"],
                         }
                         self.send_message(_message, addr)
-                        self._context.data_counter_dict[uuid] += 1
                 else:
                     for (uuid, counter) in sorted_counter[:3]:
                         if uuid == self.uuid:
                             self._context.data[message["key"]] = message["value"]
+                            self._context.node_key[self.uuid].append(message["key"])
+                            self._context.key.append(message["key"])
                             self._context.data_counter_dict[self.uuid] += 1
                             self._context.data_counter += 1
-                            _message = {
-                                "type": "put_success",
-                                "uuid": self.uuid,
-                            }
-                            #self.send_message(_message, tuple(message["cli_addr"]))
                         else:
                             tmp = message["cli_addr"]
                             for (t_uuid, addr) in self._context.peer_list:
@@ -316,17 +331,23 @@ class DHT(network.Network, timer.Timer):
                                         "value": message["value"],
                                     }
                                     self.send_message(_message, addr)
-                                    self._context.data_counter_dict[t_uuid] += 1
         elif message["type"] == "put_final":
             logging.info("put_final")
             if self._state == self.State.SLAVE:
                 self._context.data[message["key"]] = message["value"]
-                tmp = tuple(message["cli_addr"])
+                self._context.key.append(message["key"])
+                self._context.data_counter += 1
                 _message = {
-                    "type": "put_success",
+                    "type": "put_response",
                     "uuid": self.uuid,
+                    "key": message["key"],
                 }
-                #self.send_message(_message, tmp)
+                self.send_message(_message, addr)
+
+        elif message["type"] == "put_response":
+            if self.state == self.State.MASTER:
+                self._context.data_counter_dict[message["uuid"]] += 1
+                self._context.node_key[message["uuid"]].append(message["key"])
 
         elif message["type"] == "remove":
             logging.info("Client request: remove")
@@ -339,11 +360,12 @@ class DHT(network.Network, timer.Timer):
                 }
                 self.send_message(_message, self._context.master_addr)
             elif self._state == self.State.MASTER:
-                logging.info("{key} and {keys} and {bool}".format(key=message["key"], keys=self._context.data.keys(), bool=(message["key"] in self._context.data.keys())))
                 if message["key"] in self._context.data:
                     del self._context.data[message["key"]]
                     self._context.data_counter -= 1
                     self._context.data_counter_dict[self.uuid] -= 1
+                    self._context.node_key[self.uuid].remove(message["key"])
+                    self._context.key.remove(message["key"])
                 tmp = addr
                 for (uuid, addr) in self._context.peer_list:
                     _message = {
@@ -359,6 +381,8 @@ class DHT(network.Network, timer.Timer):
                     del self._context.data[message["key"]]
                     self._context.data_counter -= 1
                     self._context.data_counter_dict[self.uuid] -= 1
+                    self._context.node_key[self.uuid].remove(message["key"])
+                    self._context.key.remove(message["key"])
                 for (uuid, addr) in self._context.peer_list:
                     _message = {
                         "type": "remove_ask",
@@ -372,6 +396,7 @@ class DHT(network.Network, timer.Timer):
                 if message["key"] in self._context.data:
                     del self._context.data[message["key"]]
                     self._context.data_counter -= 1
+                    self._context.key.remove(message["key"])
                     _message = {
                         "type": "remove_response",
                         "uuid": self.uuid,
@@ -382,6 +407,7 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "remove_response":
             if self._state == self.State.MASTER:
                 self._context.data_counter_dict[message["uuid"]] -= 1
+                self._context.node_key[message["uuid"]].remove(message["key"])
 
     def master_peer_list_updated(self):
         logging.info("Peer list updated: I'm MASTER with {peers} peers".format(peers=len(self._context.peer_list)))
@@ -445,6 +471,8 @@ class DHT(network.Network, timer.Timer):
             self.data_counter_dict = {}
             self.data_counter = 0
             self.data = {}
+            self.node_key = {}
+            self.key = []
 
         def cancel(self):
             if self.heartbeat_send_job is not None:
@@ -465,6 +493,7 @@ class DHT(network.Network, timer.Timer):
             self.heartbeat_timer = None
             self.data_counter = 0
             self.data = {}
+            self.key = []
 
         def cancel(self):
             if self.heartbeat_send_job is not None:

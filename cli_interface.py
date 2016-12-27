@@ -36,6 +36,7 @@ class CLI(network.Network):
             asyncio.ensure_future(self.start(), loop = self._loop)
         if message["type"] == "get_success":
             logging.info("get success! The value for key {key} is {value}.".format(key=message["key"], value=message["value"]))
+            asyncio.ensure_future(self.start(), loop = self._loop)
 
     def __init__(self, loop):
         network.Network.__init__(self, loop)

@@ -6,8 +6,32 @@ logging.getLogger().setLevel("INFO")
 
 class CLI(network.Network):
     async def start(self):
-        logging.info(input("HELLO: "))
-        asyncio.ensure_future(self.start(), loop = self._loop)
+        args = input("INPUT (put key value/get key/remove key/stat): ")
+        args = args.split(' ')
+        if args[0] == 'put' and len(args) == 3:
+            message = {
+                "type": "put",
+                "uuid": cli_uuid,
+                "key": args[1],
+                "value": args[2],
+            }
+            self.send_message(message, ("10.0.0.4", 19999))
+        elif args[0] == 'get' and len(args) == 2:
+            pass
+        elif args[0] == 'delete' and len(args) == 2:
+            pass
+        elif args[0] == 'stat' and len(args) == 1:
+            pass
+        else:
+            logging.info("Invalid input arguments.")
+            asyncio.ensure_future(self.start(), loop = self._loop)
+
+    def message_arrived(self, message, addr):
+        if message["type"] == "put_success":
+            logging.info("put success!")
+            asyncio.ensure_future(self.start(), loop = self._loop)
+        
+
     def __init__(self, loop):
         network.Network.__init__(self, loop)
         self._loop = loop

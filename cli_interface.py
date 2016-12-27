@@ -1,12 +1,17 @@
 import asyncio
 import network
 import logging
+import random
 logging.getLogger().setLevel("INFO")
+
+addrs = ["10.0.0.4", "10.0.0.7", "10.0.0.8", "10.0.0.10"] # gemini1, gemini3, Gemini4, gemini6
+PORT = 19999
 
 class CLI(network.Network):
     async def start(self):
         args = input("INPUT (put key value/get key/remove key/stat): ")
         args = args.split(' ')
+        addr = (addrs[random.randint(0:3)], PORT)
         if args[0] == 'put' and len(args) == 3:
             message = {
                 "type": "put",
@@ -14,7 +19,7 @@ class CLI(network.Network):
                 "key": args[1],
                 "value": args[2],
             }
-            self.send_message(message, ("10.0.0.4", 19999))
+            self.send_message(message, addr)
             asyncio.ensure_future(self.start(), loop = self._loop)
         elif args[0] == 'get' and len(args) == 2:
             message = {
@@ -22,14 +27,14 @@ class CLI(network.Network):
                 "uuid": self.uuid,
                 "key": args[1]
             }
-            self.send_message(message, ("10.0.0.4", 19999))
+            self.send_message(message, addr)
         elif args[0] == 'remove' and len(args) == 2:
             message = {
                 "type": "remove",
                 "uuid": self.uuid,
                 "key": args[1]
             }
-            self.send_message(message, ("10.0.0.4", 19999))
+            self.send_message(message, addr)
             asyncio.ensure_future(self.start(), loop = self._loop)
         elif args[0] == 'stat' and len(args) == 1:
             pass

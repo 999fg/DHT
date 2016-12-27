@@ -166,11 +166,12 @@ class DHT(network.Network, timer.Timer):
                     }
                     self.send_message(_message, addr)
                 else:
+                    tmp = addr
                     for (uuid, addr) in self._context.peer_list:
                         _message = {
                             "type": "get_ask",
                             "uuid": self.uuid,
-                            "cli_addr": addr,
+                            "cli_addr": tmp,
                             "key": message["key"],
                         }
                         self.send_message(_message, addr)

@@ -7,6 +7,7 @@ logging.getLogger().setLevel("INFO")
 class CLI(network.Network):
     async def start(self):
         logging.info(input("HELLO: "))
+        asyncio.ensure_future(self.start(), loop = self._loop)
     def __init__(self, loop):
         network.Network.__init__(self, loop)
         self._loop = loop

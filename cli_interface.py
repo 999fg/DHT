@@ -1,5 +1,4 @@
 import asyncio
-import uuid
 import network
 import logging
 logging.getLogger().setLevel("INFO")
@@ -11,7 +10,7 @@ class CLI(network.Network):
         if args[0] == 'put' and len(args) == 3:
             message = {
                 "type": "put",
-                "cli_uuid": self.uuid,
+                "uuid": self.uuid,
                 "key": args[1],
                 "value": args[2],
             }

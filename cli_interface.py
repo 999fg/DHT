@@ -4,8 +4,7 @@ import network
 import logging
 logging.getLogger().setLevel("INFO")
 
-class CLI:
-
+class CLI(network.Network):
     async def start(self):
         logging.info(input("HELLO: "))
     def __init__(self, loop):
@@ -14,7 +13,7 @@ class CLI:
         asyncio.ensure_future(self.start(), loop = self._loop)
 
 
-def main():
+def interface():
     loop = asyncio.new_event_loop()
 
     CLI(loop)
@@ -26,4 +25,4 @@ def main():
     pass
 
 if __name__ == "__main__":
-    main()
+    interface()

@@ -160,7 +160,7 @@ class DHT(network.Network, timer.Timer):
                 self.send_message(_message, self._context.master_addr)
             elif self._state == self.State.MASTER:
                 min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
+                if not self._context.data_counter_dict and self._context.data_counter < self._context.data_counter_dict[min_uuid]:
                     self._context.data[message["key"]] = message["value"]
                     data_counter += 1
                     _message = {
@@ -183,7 +183,7 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "put_relayed":
             if self._state == self.State.MASTER:
                 min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
+                if not self._context.data_counter_dict and self._context.data_counter < self._context.data_counter_dict[min_uuid]:
                     self._context.data[message["key"]] = message["value"]
                     data_counter += 1
                     _message = {

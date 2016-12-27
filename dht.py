@@ -188,7 +188,6 @@ class DHT(network.Network, timer.Timer):
                                     "key": message["key"],
                                     "value": message["value"],
                                 }
-                                logging.info("tmp:{tmp}".format(tmp=tmp))
                                 self.send_message(_message, addr)
                                 self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_relayed":
@@ -201,7 +200,7 @@ class DHT(network.Network, timer.Timer):
                         "type": "put_success",
                         "uuid": self.uuid,
                     }
-                    self.send_message(_message, message["cli_addr"])
+                    self.send_message(_message, tuple(message["cli_addr"]))
                 else:
                     min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
                     if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
@@ -211,7 +210,7 @@ class DHT(network.Network, timer.Timer):
                             "type": "put_success",
                             "uuid": self.uuid,
                         }
-                        self.send_message(_message, message["cli_addr"])
+                        self.send_message(_message, tuple(message["cli_addr"]))
                     else:
                         tmp = message["cli_addr"]
                         for (uuid, addr) in self._context.peer_list:
@@ -229,12 +228,11 @@ class DHT(network.Network, timer.Timer):
             logging.info("put_final")
             if self._state == self.State.SLAVE:
                 self._context.data[message["key"]] = message["value"]
-                tmp = message["cli_addr"]
+                tmp = tuple(message["cli_addr"])
                 _message = {
                     "type": "put_success",
                     "uuid": self.uuid,
                 }
-                logging.info("tmp:{tmp}".format(tmp=tmp))
                 self.send_message(_message, tmp)
 
         elif message["type"] == "delete":

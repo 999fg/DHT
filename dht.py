@@ -166,7 +166,7 @@ class DHT(network.Network, timer.Timer):
                         "type": "put_success",
                         "uuid": self.uuid,
                     }
-                    self.send_message(_message, message["cli_addr"])
+                    self.send_message(_message, addr)
                 else:
                     min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
                     if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
@@ -176,7 +176,7 @@ class DHT(network.Network, timer.Timer):
                             "type": "put_success",
                             "uuid": self.uuid,
                         }
-                        self.send_message(_message, message["cli_addr"])
+                        self.send_message(_message, addr)
                     else:
                         tmp = addr
                         for (uuid, addr) in self._context.peer_list:
@@ -188,6 +188,7 @@ class DHT(network.Network, timer.Timer):
                                     "key": message["key"],
                                     "value": message["value"],
                                 }
+                                logging.info("tmp:{tmp}".format(tmp=tmp))
                                 self.send_message(_message, addr)
                                 self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_relayed":

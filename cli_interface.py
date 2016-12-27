@@ -53,7 +53,25 @@ class CLI(network.Network):
                 logging.info("get failed! The key does not exist!")
             asyncio.ensure_future(self.start(), loop = self._loop)
         elif message["type"] == "stat_success":
-            logging.info("stat: {stat}".format(stat=message["node_key"]))
+            stat = message["node_key"]
+            redundancy = {}
+            for uuid, keylist in stat.items():
+                for key in keylist:
+                    if key not in redundancy.keys():
+                        redundancy[key] = 1
+                    else:
+                        redundancy[key] += 1
+            index = 0
+            for uuid, keylist in stat.items():
+                logging.info("-----------------")
+                logging.info("<Node {index}>".format(index=index))
+                logging.info("UUID: {uuid}".format(uuid=uuid))
+                logging.info("# of KEYs: {no}".format(no=len(keylist)))
+                logging.info("-----------------")
+                logging.info("# of REDUNDANCIES")
+                for key in keylist:
+                    logging.info("KEY {key}: {red} times".format(key=key, red=redundancy[key]))
+                logging.info("-----------------")
     def __init__(self, loop):
         network.Network.__init__(self, loop)
         self._loop = loop

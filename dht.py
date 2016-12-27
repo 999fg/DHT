@@ -93,8 +93,10 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "leader_is_here":
             logging.info("leader_is_here")
             tmp = None
+            tmp_data = None
             if self._state == self.State.SLAVE:
                 tmp = self._context.data_counter
+                tmp_data = self._context.data
             if self._state == self.State.START or \
                     (self._state == self.State.SLAVE and self._context.master_timestamp < message["timestamp"]):
                 self._context.cancel()
@@ -106,6 +108,8 @@ class DHT(network.Network, timer.Timer):
                 self._context.master_timestamp = message["timestamp"]
                 if tmp:
                     self._context.data_counter = tmp
+                if tmp_data:
+                    self._context.data = tmp_data
                 message = {
                     "type": "data_counter",
                     "uuid": self.uuid,

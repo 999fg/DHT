@@ -21,6 +21,7 @@ class CLI(network.Network):
                 "uuid": self.uuid,
                 "key": args[1]
             }
+            self.send_message(message, ("10.0.0.4", 19999))
         elif args[0] == 'delete' and len(args) == 2:
             pass
         elif args[0] == 'stat' and len(args) == 1:
@@ -34,7 +35,7 @@ class CLI(network.Network):
             logging.info("put success!")
             asyncio.ensure_future(self.start(), loop = self._loop)
         if message["type"] == "get_success":
-            logging.info("get success! The value for key {key} is {value}.".format(key=message["key"], value=message["value"])
+            logging.info("get success! The value for key {key} is {value}.".format(key=message["key"], value=message["value"]))
 
     def __init__(self, loop):
         network.Network.__init__(self, loop)

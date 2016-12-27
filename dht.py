@@ -228,7 +228,7 @@ class DHT(network.Network, timer.Timer):
                         "key": message["key"],
                         "value": None
                     }
-                    self.send_message(_message, message["cli_addr"])
+                    self.send_message(_message, tuple(message["cli_addr"]))
         elif message["type"] == "get_ask":
             if self._state == self.State.SLAVE:
                 if message["key"] in self._context.data.keys():
@@ -431,7 +431,7 @@ class DHT(network.Network, timer.Timer):
                     "uuid": self.uuid,
                     "node_key": self._context.node_key,
                 }
-                self.send_message(_message, message["cli_addr"])
+                self.send_message(_message, tuple(message["cli_addr"]))
 
     def master_peer_list_updated(self):
         logging.info("Peer list updated: I'm MASTER with {peers} peers".format(peers=len(self._context.peer_list)))

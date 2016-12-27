@@ -427,7 +427,7 @@ class DHT(network.Network, timer.Timer):
         elif message["type"] == "stat_relay":
             if self._state == self.State.MASTER:
                 _message = {
-                    "type": "stat_success"
+                    "type": "stat_success",
                     "uuid": self.uuid,
                     "node_key": self._context.node_key,
                 }

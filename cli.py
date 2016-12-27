@@ -36,7 +36,7 @@ def send_message(message):
             logging.debug("Sending {bytes} bytes of message".format(bytes=len(b)))
             addrs = ["10.0.0.4", "10.0.0.7", "10.0.0.8", "10.0.0.9"]
             addr_to = addrs[random.randint(0,3)]
-            sock.sendto(b, ("10.0.0.4", NETWORK_PORT))
+            sock.sendto(b, ("10.0.0.4", 19999))
     except Exception as e:
         logging.error("Cannot encode a send message: " + str(e))
 
@@ -48,7 +48,7 @@ def cli():
             "uuid": cli_uuid,
             "key": args[1],
             "value": args[2],
-            "_magic": NETWORK_MAGIC_VALUE,
+            "_magic": "Sound body, sound code.",
         }
         send_message(message)
         sock.bind(("0.0.0.0", 19999))
@@ -60,7 +60,7 @@ def cli():
                 message = json.loads(s)
                 if not "_magic" in message:
                     raise Exception("No magic value")
-                if not message["_magic"] == NETWORK_MAGIC_VALUE:
+                if not message["_magic"] == "Sound body, sound code.":
                     raise Exception("Invalid magic value")
                 if message["type"] == "put_success":
                     logging.info("PUT SUCCESSFUL!")

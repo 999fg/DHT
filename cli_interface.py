@@ -11,7 +11,7 @@ class CLI(network.Network):
         if args[0] == 'put' and len(args) == 3:
             message = {
                 "type": "put",
-                "uuid": self.uuid,
+                "cli_uuid": self.uuid,
                 "key": args[1],
                 "value": args[2],
             }
@@ -30,7 +30,7 @@ class CLI(network.Network):
         if message["type"] == "put_success":
             logging.info("put success!")
             asyncio.ensure_future(self.start(), loop = self._loop)
-        
+
 
     def __init__(self, loop):
         network.Network.__init__(self, loop)

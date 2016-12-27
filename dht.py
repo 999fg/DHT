@@ -345,7 +345,7 @@ class DHT(network.Network, timer.Timer):
                 self.send_message(_message, addr)
 
         elif message["type"] == "put_response":
-            if self.state == self.State.MASTER:
+            if self._state == self.State.MASTER:
                 self._context.data_counter_dict[message["uuid"]] += 1
                 self._context.node_key[message["uuid"]].append(message["key"])
 

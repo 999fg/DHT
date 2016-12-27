@@ -409,6 +409,29 @@ class DHT(network.Network, timer.Timer):
             if self._state == self.State.MASTER:
                 self._context.data_counter_dict[message["uuid"]] -= 1
                 self._context.node_key[message["uuid"]].remove(message["key"])
+        elif message["type"] == "stat":
+            if self._state == self.State.SLAVE:
+                _message = {
+                    "type": "stat_relay",
+                    "uuid": self.uuid,
+                    "cli_addr": addr,
+                }
+                self.send_message(_message, self._context.master_addr)
+            elif self._state == self.State.MASTER:
+                _message = {
+                    "type": "stat_success",
+                    "uuid": self.uuid,
+                    "node_key": self._context.node_key,
+                }
+                self.send_message(_message, addr)
+        elif message["type"] == "stat_relay":
+            if self._state == self.State.MASTER:
+                _message = {
+                    "type": "stat_success"
+                    "uuid": self.uuid,
+                    "node_key": self._context.node_key,
+                }
+                self.send_message(_message, message["cli_addr"])
 
     def master_peer_list_updated(self):
         logging.info("Peer list updated: I'm MASTER with {peers} peers".format(peers=len(self._context.peer_list)))

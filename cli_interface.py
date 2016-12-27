@@ -37,7 +37,11 @@ class CLI(network.Network):
             self.send_message(message, addr)
             asyncio.ensure_future(self.start(), loop = self._loop)
         elif args[0] == 'stat' and len(args) == 1:
-            pass
+            message = {
+                "type": "stat",
+                "uuid": self.uuid,
+            }
+            self.send_message(message, addr)
         else:
             logging.info("Invalid input arguments.")
             asyncio.ensure_future(self.start(), loop = self._loop)
@@ -48,6 +52,8 @@ class CLI(network.Network):
             else:
                 logging.info("get failed! The key does not exist!")
             asyncio.ensure_future(self.start(), loop = self._loop)
+        elif message["type"] == "stat_success":
+            logging.info("stat: {stat}".format(stat=message["node_key"]))
     def __init__(self, loop):
         network.Network.__init__(self, loop)
         self._loop = loop

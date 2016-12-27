@@ -35,7 +35,6 @@ class DHT(network.Network, timer.Timer):
             "timestamp": self._context.timestamp,
             "peer_count": len(self._context.peer_list) + 1,
         }
-        logging.info("leader_is_here_sent")
         if not (self.uuid in self._context.node_key.keys()):
             self._context.node_key[self.uuid] = self._context.key
         self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
@@ -61,7 +60,6 @@ class DHT(network.Network, timer.Timer):
         logging.debug("Message received from {addr}, {message}".format(addr=addr, message=message))
 
         if message["type"] == "hello":
-            logging.info("hello message arrived")
             if self._state == self.State.START:
                 self._context.messages.append((message, addr))
             elif self._state == self.State.MASTER:
@@ -71,20 +69,15 @@ class DHT(network.Network, timer.Timer):
                     self.update_peer_list()
                     self.master_peer_list_updated()
         elif message["type"] == "heartbeat_ping":
-            logging.info("!!!!!PING!!!!!")
             message = {
                 "type": "heartbeat_pong",
                 "uuid": self.uuid,
                 "timestamp": time.time(),
             }
-            logging.info("mydata:{data}".format(data=self._context.data))
-            logging.info("mykey:{key}".format(key=self._context.key))
+            logging.info("CURRENT_DATA:{data}".format(data=self._context.data))
             if self._state == self.State.MASTER:
-                logging.info("mykeylist:{keylist}".format(keylist=self._context.node_key))
-                logging.info("mycounterlist:{counter}".format(counter=self._context.data_counter_dict))
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
-            logging.info("!!!!!PONG!!!!!")
             if self._state == self.State.MASTER:
                 client_uuid = message["uuid"]
                 if client_uuid in self._context.heartbeat_timer:
@@ -98,7 +91,6 @@ class DHT(network.Network, timer.Timer):
                     self._context.heartbeat_timer.cancel()
                     self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _TIMER_LONG)
         elif message["type"] == "leader_is_here":
-            logging.info("leader_is_here")
             tmp = None
             tmp_data = None
             tmp_keys = None
@@ -135,15 +127,10 @@ class DHT(network.Network, timer.Timer):
                 self._context.data_counter_dict[message["uuid"]] = message["data_counter"]
                 self._context.node_key[message["uuid"]] = message["key_list"]
         elif message["type"] == "peer_list":
-            logging.info("peer_list1 self._state = {state1} is it equals SLAVE? then peer_list2 should show up.".format(state1=self._state))
             if self._state == self.State.SLAVE:
-                logging.info("peer_list2 self._context.master_uuid = {context_uuid} message[uuid] = {uuid} are they the same? then peer_list3 should show up.".format(context_uuid=self._context.master_uuid, uuid=message["uuid"]))
                 if self._context.master_uuid == message["uuid"]:
-                    logging.info("peer_list3")
                     self._context.peer_index[message["peer_index"]] = (message["peer_uuid"], message["peer_addr"])
-
                     if (len(self._context.peer_index) + 1) == self._context.peer_count:
-                        logging.info("peer_list4")
                         self._context.peer_list = []
                         for i in range(1, self._context.peer_count):
                             self._context.peer_list.append(self._context.peer_index[i])
@@ -173,7 +160,6 @@ class DHT(network.Network, timer.Timer):
                 }
                 self.send_message(_message, self._context.master_addr)
             elif self._state == self.State.MASTER:
-                logging.info("{key} and {keys} and {bool}".format(key=message["key"], keys=self._context.data.keys(), bool=(message["key"] in self._context.data.keys())))
                 if message["key"] in self._context.data.keys():
                     _message = {
                         "type": "get_success",
@@ -291,7 +277,6 @@ class DHT(network.Network, timer.Timer):
                                     }
                                     self.send_message(_message, addr)
         elif message["type"] == "put_relayed":
-            logging.info("put_relayed")
             if self._state == self.State.MASTER:
                 if not (self.uuid in self._context.data_counter_dict.keys()):
                     self._context.data_counter_dict[self.uuid] = self._context.data_counter
@@ -333,7 +318,6 @@ class DHT(network.Network, timer.Timer):
                                     }
                                     self.send_message(_message, addr)
         elif message["type"] == "put_final":
-            logging.info("put_final")
             if self._state == self.State.SLAVE:
                 self._context.data[message["key"]] = message["value"]
                 self._context.key.append(message["key"])
@@ -455,7 +439,6 @@ class DHT(network.Network, timer.Timer):
         self._context.cancel()
         self._state = self.State.START
         self._context = self.StartContext()
-        logging.info("slave_timeout")
         asyncio.ensure_future(self.start(), loop=self._loop)
 
     async def master_heartbeat_timeout(self, client_uuid):
@@ -470,7 +453,6 @@ class DHT(network.Network, timer.Timer):
                 self.send_message(message, addr)
         self._context.peer_list.remove(client)
         self.update_peer_list()
-        logging.info("master_timeout")
         self.master_peer_list_updated()
 
     class StartContext:
@@ -534,7 +516,6 @@ class DHT(network.Network, timer.Timer):
                     "uuid": self.uuid,
                     "timestamp": time.time(),
                 }
-                logging.info("master_heartbeat")
                 self.send_message(message, addr)
         self._context.heartbeat_send_job = self.async_period(heartbeat_send, _SHORT)
         pass
@@ -546,7 +527,6 @@ class DHT(network.Network, timer.Timer):
                 "uuid": self.uuid,
                 "timestamp": time.time(),
             }
-            logging.info("slave_heartbeat")
             self.send_message(message, self._context.master_addr)
 
         self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _TIMER_LONG)
@@ -556,7 +536,6 @@ class DHT(network.Network, timer.Timer):
     async def start(self):
         self._context = self.StartContext()
         async def hello():
-            logging.info("hello job entered")
             message = {
                 "type": "hello",
                 "uuid": self.uuid,
@@ -604,7 +583,6 @@ class DHT(network.Network, timer.Timer):
 
             if self._state == self.State.MASTER:
                 self.update_peer_list()
-                logging.info("master_elected")
                 self.master_peer_list_updated()
 
         self._context.hello_job = self.async_period(hello, _SHORT)

@@ -161,7 +161,7 @@ class DHT(network.Network, timer.Timer):
             elif self._state == self.State.MASTER:
                 min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
                 if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
-                    data[message["key"]] = message["value"]
+                    self._context.data[message["key"]] = message["value"]
                     data_counter += 1
                     _message = {
                         "type": "put_success",
@@ -184,7 +184,7 @@ class DHT(network.Network, timer.Timer):
             if self._state == self.State.MASTER:
                 min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
                 if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
-                    data[message["key"]] = message["value"]
+                    self._context.data[message["key"]] = message["value"]
                     data_counter += 1
                     _message = {
                         "type": "put_success",
@@ -205,7 +205,7 @@ class DHT(network.Network, timer.Timer):
                             self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_final":
             if self._state == self.State.SLAVE:
-                data[message["key"]] = message["value"]
+                self._context.data[message["key"]] = message["value"]
                 _message = {
                     "type": "put_success",
                     "uuid": self.uuid,

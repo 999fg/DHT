@@ -257,7 +257,7 @@ class DHT(network.Network, timer.Timer):
                 if len(sorted_counter) < 3:
                     self._context.data[message["key"]] = message["value"]
                     self._context.node_key[self.uuid].append(message["key"])
-                    self._context.key.append(message["key"])
+                    #self._context.key.append(message["key"])
                     self._context.data_counter_dict[self.uuid] += 1
                     self._context.data_counter += 1
                     tmp = addr
@@ -275,7 +275,7 @@ class DHT(network.Network, timer.Timer):
                         if uuid == self.uuid:
                             self._context.data[message["key"]] = message["value"]
                             self._context.node_key[self.uuid].append(message["key"])
-                            self._context.key.append(message["key"])
+                            #self._context.key.append(message["key"])
                             self._context.data_counter_dict[self.uuid] += 1
                             self._context.data_counter += 1
                         else:
@@ -299,7 +299,7 @@ class DHT(network.Network, timer.Timer):
                 if len(sorted_counter) < 3:
                     self._context.data[message["key"]] = message["value"]
                     self._context.node_key[self.uuid].append(message["key"])
-                    self._context.key.append(message["key"])
+                    #self._context.key.append(message["key"])
                     self._context.data_counter_dict[self.uuid] += 1
                     self._context.data_counter += 1
                     tmp = message["cli_addr"]
@@ -317,7 +317,7 @@ class DHT(network.Network, timer.Timer):
                         if uuid == self.uuid:
                             self._context.data[message["key"]] = message["value"]
                             self._context.node_key[self.uuid].append(message["key"])
-                            self._context.key.append(message["key"])
+                            #self._context.key.append(message["key"])
                             self._context.data_counter_dict[self.uuid] += 1
                             self._context.data_counter += 1
                         else:
@@ -366,7 +366,7 @@ class DHT(network.Network, timer.Timer):
                     self._context.data_counter -= 1
                     self._context.data_counter_dict[self.uuid] -= 1
                     self._context.node_key[self.uuid].remove(message["key"])
-                    self._context.key.remove(message["key"])
+                    #self._context.key.remove(message["key"])
                 tmp = addr
                 for (uuid, addr) in self._context.peer_list:
                     _message = {
@@ -383,7 +383,7 @@ class DHT(network.Network, timer.Timer):
                     self._context.data_counter -= 1
                     self._context.data_counter_dict[self.uuid] -= 1
                     self._context.node_key[self.uuid].remove(message["key"])
-                    self._context.key.remove(message["key"])
+                    #self._context.key.remove(message["key"])
                 for (uuid, addr) in self._context.peer_list:
                     _message = {
                         "type": "remove_ask",

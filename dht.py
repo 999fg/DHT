@@ -159,8 +159,7 @@ class DHT(network.Network, timer.Timer):
                 }
                 self.send_message(_message, self._context.master_addr)
             elif self._state == self.State.MASTER:
-                min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                if not self._context.data_counter_dict and self._context.data_counter < self._context.data_counter_dict[min_uuid]:
+                if not self._context.data_counter_dict:
                     self._context.data[message["key"]] = message["value"]
                     data_counter += 1
                     _message = {
@@ -169,21 +168,30 @@ class DHT(network.Network, timer.Timer):
                     }
                     self.send_message(_message, message["cli_addr"])
                 else:
-                    for (uuid, addr) in self._context.peer_list:
-                        if min_uuid == uuid:
-                            _message = {
-                                "type": "put_final",
-                                "uuid": self.uuid,
-                                "cli_addr": message["cli_addr"],
-                                "key": message["key"],
-                                "value": message["value"],
-                            }
-                            self.send_message(_message, addr)
-                            self._context.data_counter_dict[uuid] += 1
+                    min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
+                    if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
+                        self._context.data[message["key"]] = message["value"]
+                        data_counter += 1
+                        _message = {
+                            "type": "put_success",
+                            "uuid": self.uuid,
+                        }
+                        self.send_message(_message, message["cli_addr"])
+                    else:
+                        for (uuid, addr) in self._context.peer_list:
+                            if min_uuid == uuid:
+                                _message = {
+                                    "type": "put_final",
+                                    "uuid": self.uuid,
+                                    "cli_addr": message["cli_addr"],
+                                    "key": message["key"],
+                                    "value": message["value"],
+                                }
+                                self.send_message(_message, addr)
+                                self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_relayed":
             if self._state == self.State.MASTER:
-                min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                if not self._context.data_counter_dict and self._context.data_counter < self._context.data_counter_dict[min_uuid]:
+                if not self._context.data_counter_dict:
                     self._context.data[message["key"]] = message["value"]
                     data_counter += 1
                     _message = {
@@ -192,17 +200,27 @@ class DHT(network.Network, timer.Timer):
                     }
                     self.send_message(_message, message["cli_addr"])
                 else:
-                    for (uuid, addr) in self._context.peer_list:
-                        if min_uuid == uuid:
-                            _message = {
-                                "type": "put_final",
-                                "uuid": self.uuid,
-                                "cli_addr": message["cli_addr"],
-                                "key": message["key"],
-                                "value": message["value"],
-                            }
-                            self.send_message(_message, addr)
-                            self._context.data_counter_dict[uuid] += 1
+                    min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
+                    if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
+                        self._context.data[message["key"]] = message["value"]
+                        data_counter += 1
+                        _message = {
+                            "type": "put_success",
+                            "uuid": self.uuid,
+                        }
+                        self.send_message(_message, message["cli_addr"])
+                    else:
+                        for (uuid, addr) in self._context.peer_list:
+                            if min_uuid == uuid:
+                                _message = {
+                                    "type": "put_final",
+                                    "uuid": self.uuid,
+                                    "cli_addr": message["cli_addr"],
+                                    "key": message["key"],
+                                    "value": message["value"],
+                                }
+                                self.send_message(_message, addr)
+                                self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_final":
             if self._state == self.State.SLAVE:
                 self._context.data[message["key"]] = message["value"]

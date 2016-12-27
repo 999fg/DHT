@@ -72,6 +72,8 @@ class CLI(network.Network):
                 for key in keylist:
                     logging.info("KEY {key}: {red} times".format(key=key, red=redundancy[key]))
                 logging.info("-----------------")
+                index += 1
+            asyncio.ensure_future(self.start(), loop = self._loop)
     def __init__(self, loop):
         network.Network.__init__(self, loop)
         self._loop = loop

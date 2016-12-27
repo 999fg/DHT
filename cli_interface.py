@@ -15,6 +15,7 @@ class CLI(network.Network):
                 "value": args[2],
             }
             self.send_message(message, ("10.0.0.4", 19999))
+            asyncio.ensure_future(self.start(), loop = self._loop)
         elif args[0] == 'get' and len(args) == 2:
             message = {
                 "type": "get",
@@ -29,13 +30,12 @@ class CLI(network.Network):
         else:
             logging.info("Invalid input arguments.")
             asyncio.ensure_future(self.start(), loop = self._loop)
-        asyncio.ensure_future(self.start(), loop = self._loop)
     def message_arrived(self, message, addr):
         if message["type"] == "put_success":
             logging.info("put success from node {addr}".format(addr=addr))
         if message["type"] == "get_success":
             logging.info("get success! The value for key {key} is {value}.".format(key=message["key"], value=message["value"]))
-
+            asyncio.ensure_future(self.start(), loop = self._loop)
     def __init__(self, loop):
         network.Network.__init__(self, loop)
         self._loop = loop

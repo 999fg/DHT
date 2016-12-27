@@ -234,6 +234,7 @@ class DHT(network.Network, timer.Timer):
                     "type": "put_success",
                     "uuid": self.uuid,
                 }
+                logging.info("tmp:{tmp}".format(tmp=tmp))
                 self.send_message(_message, tmp)
 
         elif message["type"] == "delete":

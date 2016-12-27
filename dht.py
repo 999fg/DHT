@@ -75,7 +75,6 @@ class DHT(network.Network, timer.Timer):
                 "timestamp": time.time(),
             }
             logging.info("CURRENT_DATA:{data}".format(data=self._context.data))
-            if self._state == self.State.MASTER:
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
             if self._state == self.State.MASTER:

@@ -191,6 +191,7 @@ class DHT(network.Network, timer.Timer):
                                 self.send_message(_message, addr)
                                 self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_relayed":
+            logging.info("put_relayed")
             if self._state == self.State.MASTER:
                 if not self._context.data_counter_dict:
                     self._context.data[message["key"]] = message["value"]
@@ -224,6 +225,7 @@ class DHT(network.Network, timer.Timer):
                                 self.send_message(_message, addr)
                                 self._context.data_counter_dict[uuid] += 1
         elif message["type"] == "put_final":
+            logging.info("put_final")
             if self._state == self.State.SLAVE:
                 self._context.data[message["key"]] = message["value"]
                 tmp = message["cli_addr"]

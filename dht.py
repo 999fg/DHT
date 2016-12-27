@@ -147,7 +147,61 @@ class DHT(network.Network, timer.Timer):
             asyncio.ensure_future(self.start(), loop=self._loop)
         elif message["type"] == "get":
             logging.info("Client request: get")
-            pass
+            if self._state == self.State.SLAVE:
+                _message = {
+                    "type": "get_relayed",
+                    "uuid": self.uuid,
+                    "cli_addr": addr,
+                    "key": message["key"],
+                }
+                self.send_message(_message, self._context.master_addr)
+            elif self._state == self.State.MASTER:
+                if message["key"] in self._context.data.keys():
+                    _message = {
+                        "type": "get_success",
+                        "uuid": self.uuid,
+                        "key": message["key"],
+                        "value": self._context.data[message["key"]],
+                    }
+                    self.send_message(_message, addr)
+                else:
+                    for (uuid, addr) in self._context.peer_list:
+                        _message = {
+                            "type": "get_ask",
+                            "uuid": self.uuid,
+                            "cli_addr": addr,
+                            "key": message["key"],
+                        }
+                        self.send_message(_message, addr)
+        elif message["type"] == "get_relayed":
+            if self._state == self.State.MASTER:
+                if message["key"] in self._context.data.keys():
+                    _message = {
+                        "type": "get_success",
+                        "uuid": self.uuid,
+                        "key": message["key"],
+                        "value": self._context.data[message["key"]],
+                    }
+                    self.send_message(_message, tuple(message["cli_addr"]))
+                else:
+                    for (uuid, addr) in self._context.peer_list:
+                        _message = {
+                            "type": "get_ask",
+                            "uuid": self.uuid,
+                            "cli_addr": message["cli_addr"],
+                            "key": message["key"],
+                        }
+                        self.send_message(_message, addr)
+        elif message["type"] == "get_ask":
+            if self._state == self.State.SLAVE:
+                if message["key"] in self._context.data.keys():
+                    _message = {
+                        "type": "get_success",
+                        "uuid": self.uuid,
+                        "key": message["key"],
+                        "value": self._context.data[message["key"]],
+                    }
+                    self.send_message(_message, tuple(message["cli_addr"]))
         elif message["type"] == "put":
             logging.info("Client request: put")
             if self._state == self.State.SLAVE:

@@ -51,7 +51,6 @@ def cli():
             "_magic": "Sound body, sound code.",
         }
         send_message(message)
-        sock.bind(("0.0.0.0", 19999))
         data = None
         while True:
             data = sock.recvfrom(1024)

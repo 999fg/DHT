@@ -81,6 +81,7 @@ class DHT(network.Network, timer.Timer):
             logging.info("mykey:{key}".format(key=self._context.key))
             if self._state == self.State.MASTER:
                 logging.info("mykeylist:{keylist}".format(keylist=self._context.node_key))
+                logging.info("mycounterlist:{counter}".format(counter=self._context.data_counter_dict))
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
             logging.info("!!!!!PONG!!!!!")

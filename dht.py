@@ -74,6 +74,7 @@ class DHT(network.Network, timer.Timer):
                 "uuid": self.uuid,
                 "timestamp": time.time(),
             }
+            logging.info("mydata:{data}".format(data=self._context.data))
             self.send_message(message, addr)
         elif message["type"] == "heartbeat_pong":
             logging.info("!!!!!PONG!!!!!")
@@ -161,7 +162,7 @@ class DHT(network.Network, timer.Timer):
             elif self._state == self.State.MASTER:
                 if not self._context.data_counter_dict:
                     self._context.data[message["key"]] = message["value"]
-                    data_counter += 1
+                    self._context.data_counter += 1
                     _message = {
                         "type": "put_success",
                         "uuid": self.uuid,
@@ -171,7 +172,7 @@ class DHT(network.Network, timer.Timer):
                     min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
                     if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
                         self._context.data[message["key"]] = message["value"]
-                        data_counter += 1
+                        self._context.data_counter += 1
                         _message = {
                             "type": "put_success",
                             "uuid": self.uuid,
@@ -195,7 +196,7 @@ class DHT(network.Network, timer.Timer):
             if self._state == self.State.MASTER:
                 if not self._context.data_counter_dict:
                     self._context.data[message["key"]] = message["value"]
-                    data_counter += 1
+                    self._context.data_counter += 1
                     _message = {
                         "type": "put_success",
                         "uuid": self.uuid,
@@ -205,7 +206,7 @@ class DHT(network.Network, timer.Timer):
                     min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
                     if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
                         self._context.data[message["key"]] = message["value"]
-                        data_counter += 1
+                        self._context.data_counter += 1
                         _message = {
                             "type": "put_success",
                             "uuid": self.uuid,

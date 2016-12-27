@@ -11,7 +11,7 @@ class CLI(network.Network):
     async def start(self):
         args = input("INPUT (put key value/get key/remove key/stat): ")
         args = args.split(' ')
-        addr = (addrs[random.randint(0:3)], PORT)
+        addr = (addrs[random.randint(0,3)], PORT)
         if args[0] == 'put' and len(args) == 3:
             message = {
                 "type": "put",

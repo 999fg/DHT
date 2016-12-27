@@ -24,7 +24,13 @@ class CLI(network.Network):
             }
             self.send_message(message, ("10.0.0.4", 19999))
         elif args[0] == 'remove' and len(args) == 2:
-            pass
+            message = {
+                "type": "remove",
+                "uuid": self.uuid,
+                "key": args[1]
+            }
+            self.send_message(message, ("10.0.0.4", 19999))
+            asyncio.ensure_future(self.start(), loop = self._loop)
         elif args[0] == 'stat' and len(args) == 1:
             pass
         else:

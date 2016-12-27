@@ -328,9 +328,62 @@ class DHT(network.Network, timer.Timer):
                 }
                 #self.send_message(_message, tmp)
 
-        elif message["type"] == "delete":
-            logging.info("Client request: delete")
-            pass
+        elif message["type"] == "remove":
+            logging.info("Client request: remove")
+            if self._state == self.State.SLAVE:
+                _message = {
+                    "type": "remove_relayed",
+                    "uuid": self.uuid,
+                    "cli_addr": addr,
+                    "key": message["key"],
+                }
+                self.send_message(_message, self._context.master_addr)
+            elif self._state == self.State.MASTER:
+                logging.info("{key} and {keys} and {bool}".format(key=message["key"], keys=self._context.data.keys(), bool=(message["key"] in self._context.data.keys())))
+                if message["key"] in self._context.data:
+                    del self._context.data[message["key"]]
+                    self._context.data_counter -= 1
+                    self._context.data_counter_dict[self.uuid] -= 1
+                else:
+                    tmp = addr
+                    for (uuid, addr) in self._context.peer_list:
+                        _message = {
+                            "type": "remove_ask",
+                            "uuid": self.uuid,
+                            "cli_addr": tmp,
+                            "key": message["key"],
+                        }
+                        self.send_message(_message, addr)
+        elif message["type"] == "remove_relayed":
+            if self._state == self.State.MASTER:
+                if message["key"] in self._context.data:
+                    del self._context.data[message["key"]]
+                    self._context.data_counter -= 1
+                    self._context.data_counter_dict[self.uuid] -= 1
+                else:
+                    for (uuid, addr) in self._context.peer_list:
+                        _message = {
+                            "type": "remove_ask",
+                            "uuid": self.uuid,
+                            "cli_addr": message["cli_addr"],
+                            "key": message["key"],
+                        }
+                        self.send_message(_message, addr)
+        elif message["type"] == "remove_ask":
+            if self._state == self.State.SLAVE:
+                if message["key"] in self._context.data:
+                    del self._context.data[message["key"]]
+                    self._context.data_counter -= 1
+                    _message = {
+                        "type": "remove_response",
+                        "uuid": self.uuid,
+                        "cli_addr": message["cli_addr"],
+                        "key": message["key"],
+                    }
+                    self.send_message(_message, addr)
+        elif message["type"] == "remove_response":
+            if self._state == self.State.MASTER:
+                self._context.data_counter_dict[message["uuid"]] -= 1
 
     def master_peer_list_updated(self):
         logging.info("Peer list updated: I'm MASTER with {peers} peers".format(peers=len(self._context.peer_list)))

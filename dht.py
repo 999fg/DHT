@@ -231,7 +231,7 @@ class DHT(network.Network, timer.Timer):
                         "type": "put_success",
                         "uuid": self.uuid,
                     }
-                    self.send_message(_message, addr)
+                    #self.send_message(_message, addr)
                     tmp = addr
                     for (uuid, addr) in self._context.peer_list:
                         _message = {
@@ -253,7 +253,7 @@ class DHT(network.Network, timer.Timer):
                                 "type": "put_success",
                                 "uuid": self.uuid,
                             }
-                            self.send_message(_message, addr)
+                            #self.send_message(_message, addr)
                         else:
                             tmp = addr
                             for (t_uuid, addr) in self._context.peer_list:
@@ -281,7 +281,7 @@ class DHT(network.Network, timer.Timer):
                         "type": "put_success",
                         "uuid": self.uuid,
                     }
-                    self.send_message(_message, tuple(message["cli_addr"]))
+                    #self.send_message(_message, tuple(message["cli_addr"]))
                     tmp = message["cli_addr"]
                     for (uuid, addr) in self._context.peer_list:
                         _message = {
@@ -303,7 +303,7 @@ class DHT(network.Network, timer.Timer):
                                 "type": "put_success",
                                 "uuid": self.uuid,
                             }
-                            self.send_message(_message, tuple(message["cli_addr"]))
+                            #self.send_message(_message, tuple(message["cli_addr"]))
                         else:
                             tmp = message["cli_addr"]
                             for (t_uuid, addr) in self._context.peer_list:
@@ -326,7 +326,7 @@ class DHT(network.Network, timer.Timer):
                     "type": "put_success",
                     "uuid": self.uuid,
                 }
-                self.send_message(_message, tmp)
+                #self.send_message(_message, tmp)
 
         elif message["type"] == "delete":
             logging.info("Client request: delete")

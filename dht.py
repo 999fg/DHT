@@ -27,12 +27,12 @@ class DHT(network.Network, timer.Timer):
             timer.cancel()
         self._context.heartbeat_timer.clear()
         self._context.timestamp = time.time()
-        self._context.data_counter_dict.clear()
+
         message = {
             "type": "leader_is_here",
             "uuid": self.uuid,
             "timestamp": self._context.timestamp,
-            "peer_count": len(self._context.peer_list) + 1,
+            "peer_count": len(self._context.peer_list) + 1
         }
         logging.info("leader_is_here_sent")
         self.send_message(message, (network.NETWORK_BROADCAST_ADDR, network.NETWORK_PORT))
@@ -91,9 +91,6 @@ class DHT(network.Network, timer.Timer):
                     self._context.heartbeat_timer = self.async_trigger(self.slave_heartbeat_timeout, _TIMER_LONG)
         elif message["type"] == "leader_is_here":
             logging.info("leader_is_here")
-            tmp = None
-            if self._state == self.State.SLAVE:
-                tmp = self._context.data_counter
             if self._state == self.State.START or \
                     (self._state == self.State.SLAVE and self._context.master_timestamp < message["timestamp"]):
                 self._context.cancel()
@@ -103,19 +100,8 @@ class DHT(network.Network, timer.Timer):
                 self._context.master_addr = addr
                 self._context.peer_count = int(message["peer_count"])
                 self._context.master_timestamp = message["timestamp"]
-                if tmp:
-                    self._context.data_counter = tmp
-                message = {
-                    "type": "data_counter",
-                    "uuid": self.uuid,
-                    "data_counter": self._context.data_counter,
-                }
-                self.send_message(message, self._context.master_addr)
                 asyncio.ensure_future(self.slave(), loop=self._loop)
                 pass
-        elif message["type"] == "data_counter":
-            if self._state == self.State.MASTER:
-                self._context.data_counter_dict[message["uuid"]] = message["data_counter"]
         elif message["type"] == "peer_list":
             logging.info("peer_list1 self._state = {state1} is it equals SLAVE? then peer_list2 should show up.".format(state1=self._state))
             if self._state == self.State.SLAVE:
@@ -149,69 +135,7 @@ class DHT(network.Network, timer.Timer):
             pass
         elif message["type"] == "put":
             logging.info("Client request: put")
-            if self._state == self.State.SLAVE:
-                _message = {
-                    "type": "put_relayed",
-                    "uuid": self.uuid,
-                    "cli_addr": addr,
-                    "key": message["key"],
-                    "value": message["value"],
-                }
-                self.send_message(_message, self._context.master_addr)
-            elif self._state == self.State.MASTER:
-                min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
-                    data[message["key"]] = message["value"]
-                    data_counter += 1
-                    _message = {
-                        "type": "put_success",
-                        "uuid": self.uuid,
-                    }
-                    self.send_message(_message, message["cli_addr"])
-                else:
-                    for (uuid, addr) in self._context.peer_list:
-                        if min_uuid == uuid:
-                            _message = {
-                                "type": "put_final",
-                                "uuid": self.uuid,
-                                "cli_addr": message["cli_addr"],
-                                "key": message["key"],
-                                "value": message["value"],
-                            }
-                            self.send_message(_message, addr)
-                            self._context.data_counter_dict[uuid] += 1
-        elif message["type"] == "put_relayed":
-            if self._state == self.State.MASTER:
-                min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
-                    data[message["key"]] = message["value"]
-                    data_counter += 1
-                    _message = {
-                        "type": "put_success",
-                        "uuid": self.uuid,
-                    }
-                    self.send_message(_message, message["cli_addr"])
-                else:
-                    for (uuid, addr) in self._context.peer_list:
-                        if min_uuid == uuid:
-                            _message = {
-                                "type": "put_final",
-                                "uuid": self.uuid,
-                                "cli_addr": message["cli_addr"],
-                                "key": message["key"],
-                                "value": message["value"],
-                            }
-                            self.send_message(_message, addr)
-                            self._context.data_counter_dict[uuid] += 1
-        elif message["type"] == "put_final":
-            if self._state == self.State.SLAVE:
-                data[message["key"]] = message["value"]
-                _message = {
-                    "type": "put_success",
-                    "uuid": self.uuid,
-                }
-                self.send_message(_message, message["cli_addr"])
-
+            pass
         elif message["type"] == "delete":
             logging.info("Client request: delete")
             pass
@@ -275,9 +199,6 @@ class DHT(network.Network, timer.Timer):
             self.timestamp = time.time()
             self.heartbeat_send_job = None
             self.heartbeat_timer = {}
-            self.data_counter_dict = {}
-            self.data_counter = 0
-            self.data = {}
 
         def cancel(self):
             if self.heartbeat_send_job is not None:
@@ -296,8 +217,6 @@ class DHT(network.Network, timer.Timer):
             self.master_timestamp = None
             self.heartbeat_send_job = None
             self.heartbeat_timer = None
-            self.data_counter = 0
-            self.data = {}
 
         def cancel(self):
             if self.heartbeat_send_job is not None:

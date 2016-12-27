@@ -46,12 +46,12 @@ def cli():
         message = {
             "type": "put",
             "uuid": cli_uuid,
-            "key": args[1]
-            "value": args[2]
+            "key": args[1],
+            "value": args[2],
             "_magic": NETWORK_MAGIC_VALUE,
         }
         send_message(message)
-        sock.bind((NETWORK_LISTEN_ADDR, NETWORK_PORT))
+        sock.bind(("0.0.0.0", 19999))
         data = None
         while True:
             data = sock.recvfrom(1024)

@@ -156,6 +156,7 @@ class DHT(network.Network, timer.Timer):
                 }
                 self.send_message(_message, self._context.master_addr)
             elif self._state == self.State.MASTER:
+                logging.info("{key} and {keys}".format(key=message["key"], keys=self._context.data.keys()))
                 if message["key"] in self._context.data.keys():
                     _message = {
                         "type": "get_success",

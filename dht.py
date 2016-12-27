@@ -344,31 +344,29 @@ class DHT(network.Network, timer.Timer):
                     del self._context.data[message["key"]]
                     self._context.data_counter -= 1
                     self._context.data_counter_dict[self.uuid] -= 1
-                else:
-                    tmp = addr
-                    for (uuid, addr) in self._context.peer_list:
-                        _message = {
-                            "type": "remove_ask",
-                            "uuid": self.uuid,
-                            "cli_addr": tmp,
-                            "key": message["key"],
-                        }
-                        self.send_message(_message, addr)
+                tmp = addr
+                for (uuid, addr) in self._context.peer_list:
+                    _message = {
+                        "type": "remove_ask",
+                        "uuid": self.uuid,
+                        "cli_addr": tmp,
+                        "key": message["key"],
+                    }
+                    self.send_message(_message, addr)
         elif message["type"] == "remove_relayed":
             if self._state == self.State.MASTER:
                 if message["key"] in self._context.data:
                     del self._context.data[message["key"]]
                     self._context.data_counter -= 1
                     self._context.data_counter_dict[self.uuid] -= 1
-                else:
-                    for (uuid, addr) in self._context.peer_list:
-                        _message = {
-                            "type": "remove_ask",
-                            "uuid": self.uuid,
-                            "cli_addr": message["cli_addr"],
-                            "key": message["key"],
-                        }
-                        self.send_message(_message, addr)
+                for (uuid, addr) in self._context.peer_list:
+                    _message = {
+                        "type": "remove_ask",
+                        "uuid": self.uuid,
+                        "cli_addr": message["cli_addr"],
+                        "key": message["key"],
+                    }
+                    self.send_message(_message, addr)
         elif message["type"] == "remove_ask":
             if self._state == self.State.SLAVE:
                 if message["key"] in self._context.data:

@@ -216,71 +216,103 @@ class DHT(network.Network, timer.Timer):
                 }
                 self.send_message(_message, self._context.master_addr)
             elif self._state == self.State.MASTER:
-                if not self._context.data_counter_dict:
+                if not (self.uuid in self._context.data_counter_dict.keys()):
+                    self._context.data_counter_dict[self.uuid] = self._context.data_counter
+                sorted_counter = [(k, self._context.data_counter_dict[k]) for k in sorted(self._context.data_counter_dict, key=self._context.data_counter_dict.get, reverse=False)]
+                if len(sorted_counter) < 3:
                     self._context.data[message["key"]] = message["value"]
+                    self._context.data_counter_dict[self.uuid] += 1
                     self._context.data_counter += 1
                     _message = {
                         "type": "put_success",
                         "uuid": self.uuid,
                     }
                     self.send_message(_message, addr)
-                else:
-                    min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                    if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
-                        self._context.data[message["key"]] = message["value"]
-                        self._context.data_counter += 1
+                    tmp = addr
+                    for (uuid, addr) in self._context.peer_list:
                         _message = {
-                            "type": "put_success",
+                            "type": "put_final",
                             "uuid": self.uuid,
+                            "cli_addr": tmp,
+                            "key": message["key"],
+                            "value": message["value"],
                         }
                         self.send_message(_message, addr)
-                    else:
-                        tmp = addr
-                        for (uuid, addr) in self._context.peer_list:
-                            if min_uuid == uuid:
-                                _message = {
-                                    "type": "put_final",
-                                    "uuid": self.uuid,
-                                    "cli_addr": tmp,
-                                    "key": message["key"],
-                                    "value": message["value"],
-                                }
-                                self.send_message(_message, addr)
-                                self._context.data_counter_dict[uuid] += 1
+                        self._context.data_counter_dict[uuid] += 1
+                else:
+                    for (uuid, counter) in sorted_counter[:3]:
+                        if uuid == self.uuid:
+                            self._context.data[message["key"]] = message["value"]
+                            self._context.data_counter_dict[self.uuid] += 1
+                            self._context.data_counter += 1
+                            _message = {
+                                "type": "put_success",
+                                "uuid": self.uuid,
+                            }
+                            self.send_message(_message, addr)
+                        else:
+                            tmp = addr
+                            for (t_uuid, addr) in self._context.peer_list:
+                                if uuid == t_uuid:
+                                    _message = {
+                                        "type": "put_final",
+                                        "uuid": self.uuid,
+                                        "cli_addr": tmp,
+                                        "key": message["key"],
+                                        "value": message["value"],
+                                    }
+                                    self.send_message(_message, addr)
+                                    self._context.data_counter_dict[t_uuid] += 1
         elif message["type"] == "put_relayed":
             logging.info("put_relayed")
             if self._state == self.State.MASTER:
-                if not self._context.data_counter_dict:
+                if not (self.uuid in self._context.data_counter_dict.keys()):
+                    self._context.data_counter_dict[self.uuid] = self._context.data_counter
+                sorted_counter = [(k, self._context.data_counter_dict[k]) for k in sorted(self._context.data_counter_dict, key=self._context.data_counter_dict.get, reverse=False)]
+                if len(sorted_counter) < 3:
                     self._context.data[message["key"]] = message["value"]
+                    self._context.data_counter_dict[self.uuid] += 1
                     self._context.data_counter += 1
                     _message = {
                         "type": "put_success",
                         "uuid": self.uuid,
                     }
                     self.send_message(_message, tuple(message["cli_addr"]))
-                else:
-                    min_uuid = min(self._context.data_counter_dict, key=self._context.data_counter_dict.get)
-                    if self._context.data_counter < self._context.data_counter_dict[min_uuid]:
-                        self._context.data[message["key"]] = message["value"]
-                        self._context.data_counter += 1
+                    tmp = message["cli_addr"]
+                    for (uuid, addr) in self._context.peer_list:
                         _message = {
-                            "type": "put_success",
+                            "type": "put_final",
                             "uuid": self.uuid,
+                            "cli_addr": tmp,
+                            "key": message["key"],
+                            "value": message["value"],
                         }
-                        self.send_message(_message, tuple(message["cli_addr"]))
-                    else:
-                        tmp = message["cli_addr"]
-                        for (uuid, addr) in self._context.peer_list:
-                            if min_uuid == uuid:
-                                _message = {
-                                    "type": "put_final",
-                                    "uuid": self.uuid,
-                                    "cli_addr": tmp,
-                                    "key": message["key"],
-                                    "value": message["value"],
-                                }
-                                self.send_message(_message, addr)
-                                self._context.data_counter_dict[uuid] += 1
+                        self.send_message(_message, addr)
+                        self._context.data_counter_dict[uuid] += 1
+                else:
+                    for (uuid, counter) in sorted_counter[:3]:
+                        if uuid == self.uuid:
+                            self._context.data[message["key"]] = message["value"]
+                            self._context.data_counter_dict[self.uuid] += 1
+                            self._context.data_counter += 1
+                            _message = {
+                                "type": "put_success",
+                                "uuid": self.uuid,
+                            }
+                            self.send_message(_message, tuple(message["cli_addr"]))
+                        else:
+                            tmp = message["cli_addr"]
+                            for (t_uuid, addr) in self._context.peer_list:
+                                if uuid == t_uuid:
+                                    _message = {
+                                        "type": "put_final",
+                                        "uuid": self.uuid,
+                                        "cli_addr": tmp,
+                                        "key": message["key"],
+                                        "value": message["value"],
+                                    }
+                                    self.send_message(_message, addr)
+                                    self._context.data_counter_dict[t_uuid] += 1
         elif message["type"] == "put_final":
             logging.info("put_final")
             if self._state == self.State.SLAVE:

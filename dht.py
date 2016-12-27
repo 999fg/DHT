@@ -178,7 +178,7 @@ class DHT(network.Network, timer.Timer):
                         }
                         self.send_message(_message, message["cli_addr"])
                     else:
-                        addr = tmp
+                        tmp = addr
                         for (uuid, addr) in self._context.peer_list:
                             if min_uuid == uuid:
                                 _message = {
